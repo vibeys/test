@@ -9,7 +9,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [message, setMessage] = useState({ type: "", text: "" })
-  const [filter, setFilter] = useState("all") // all | rented | available
+  const [filter, setFilter] = useState("all")
 
   useEffect(() => {
     fetchBooks()
@@ -17,7 +17,7 @@ export default function App() {
 
   useEffect(() => {
     if (!message.text) return
-    const timer = setTimeout(() => setMessage({ type: "", text: "" }), 2800)
+    const timer = setTimeout(() => setMessage({ type: "", text: "" }), 2400)
     return () => clearTimeout(timer)
   }, [message])
 
@@ -172,10 +172,6 @@ export default function App() {
     })
   }, [books, search, filter])
 
-  const setFilterFromCard = (nextFilter) => {
-    setFilter(nextFilter)
-  }
-
   return (
     <div className="app-shell">
       <style>{professionalCSS}</style>
@@ -241,132 +237,189 @@ export default function App() {
       </aside>
 
       <main className="main-area">
-        <section className="hero">
-          <div>
-            <p className="eyebrow">Library Operations</p>
-            <h1 className="hero-title">Library System</h1>
-            <p className="hero-text">
-              Manage books, track rentals, and keep your library records organized in
-              one clean dashboard.
-            </p>
-          </div>
-
-          <button className="ghost-btn" onClick={fetchBooks}>
-            Refresh Records
-          </button>
-        </section>
-
-        {message.text && <div className={`toast ${message.type}`}>{message.text}</div>}
-
-        <section className="stats-grid">
-          <button
-            className={`stat-card stat-button ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilterFromCard("all")}
-            type="button"
-          >
-            <span className="stat-label">Total Books</span>
-            <span className="stat-value">{stats.total}</span>
-          </button>
-
-          <button
-            className={`stat-card stat-button ${filter === "rented" ? "active" : ""}`}
-            onClick={() => setFilterFromCard("rented")}
-            type="button"
-          >
-            <span className="stat-label">Rented</span>
-            <span className="stat-value danger-text">{stats.rented}</span>
-          </button>
-
-          <button
-            className={`stat-card stat-button ${filter === "available" ? "active" : ""}`}
-            onClick={() => setFilterFromCard("available")}
-            type="button"
-          >
-            <span className="stat-label">Available</span>
-            <span className="stat-value success-text">{stats.available}</span>
-          </button>
-        </section>
-
-        <section className="list-card">
-          <div className="list-header">
-            <div>
-              <h3>Book Inventory</h3>
-              <p>{filteredBooks.length} record(s) shown</p>
+        <div className="phone-frame">
+          <section className="hero">
+            <div className="hero-topline">
+              <div className="hero-mini-badge">11:21</div>
+              <div className="hero-mini-dots">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
-            <div className="list-search-summary">
-              {filter === "all"
-                ? "Showing all books"
-                : filter === "rented"
-                ? "Showing rented books"
-                : "Showing available books"}
-              {search ? ` • Search: "${search}"` : ""}
-            </div>
-          </div>
 
-          {loading ? (
-            <div className="loading-state">Loading library records...</div>
-          ) : filteredBooks.length === 0 ? (
-            <div className="empty-state">
-              <h4>No records found</h4>
-              <p>Add a new book or adjust your search/filter.</p>
+            <div className="hero-copy">
+              <p className="eyebrow">Library Operations</p>
+              <h1 className="hero-title">Library System</h1>
+              <p className="hero-text">
+                Manage books, rentals, and records in one clean dashboard.
+              </p>
             </div>
-          ) : (
-            <div className="book-list">
-              {filteredBooks.map((book) => (
-                <article key={book.id} className="book-row">
-                  <div className="book-info">
-                    <h4 className="book-title">{book.title}</h4>
-                    <span className="book-id">ID: {String(book.id).slice(0, 8)}</span>
-                  </div>
 
-                  <div className="row-right">
-                    <div
-                      className={`status-badge ${
-                        book.is_rented ? "rented" : "available"
-                      }`}
-                    >
-                      <span
-                        className={`status-dot ${
+            <button className="ghost-btn" onClick={fetchBooks}>
+              Refresh
+            </button>
+          </section>
+
+          <section className="mobile-controls">
+            <div className="mobile-control-card mobile-search-card">
+              <div className="panel-head compact">
+                <span className="panel-label">Search</span>
+              </div>
+              <input
+                className="glass-input compact-input"
+                placeholder="Search catalog..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="mobile-row">
+              <div className="mobile-control-card half-card">
+                <div className="panel-head compact">
+                  <span className="panel-label">Borrower</span>
+                </div>
+                <input
+                  className="glass-input compact-input"
+                  placeholder="Borrower"
+                  value={borrower}
+                  onChange={(e) => setBorrower(e.target.value)}
+                />
+              </div>
+
+              <form className="mobile-control-card half-card" onSubmit={addBook}>
+                <div className="panel-head compact">
+                  <span className="panel-label">New Entry</span>
+                </div>
+                <input
+                  className="glass-input compact-input"
+                  placeholder="Book title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="action-btn-primary compact-btn"
+                  disabled={busyId === "add"}
+                >
+                  {busyId === "add" ? "Adding..." : "Add"}
+                </button>
+              </form>
+            </div>
+          </section>
+
+          {message.text && <div className={`toast ${message.type}`}>{message.text}</div>}
+
+          <section className="stats-grid">
+            <button
+              className={`stat-card stat-button ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+              type="button"
+            >
+              <span className="stat-label">Total Books</span>
+              <span className="stat-value">{stats.total}</span>
+            </button>
+
+            <button
+              className={`stat-card stat-button ${filter === "rented" ? "active" : ""}`}
+              onClick={() => setFilter("rented")}
+              type="button"
+            >
+              <span className="stat-label">Rented</span>
+              <span className="stat-value danger-text">{stats.rented}</span>
+            </button>
+
+            <button
+              className={`stat-card stat-button ${filter === "available" ? "active" : ""}`}
+              onClick={() => setFilter("available")}
+              type="button"
+            >
+              <span className="stat-label">Available</span>
+              <span className="stat-value success-text">{stats.available}</span>
+            </button>
+          </section>
+
+          <section className="list-card">
+            <div className="list-header">
+              <div>
+                <h3>Book Inventory</h3>
+                <p>{filteredBooks.length} record(s) shown</p>
+              </div>
+              <div className="list-search-summary">
+                {filter === "all"
+                  ? "Showing all books"
+                  : filter === "rented"
+                  ? "Showing rented books"
+                  : "Showing available books"}
+                {search ? ` • Search: "${search}"` : ""}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="loading-state">Loading library records...</div>
+            ) : filteredBooks.length === 0 ? (
+              <div className="empty-state">
+                <h4>No records found</h4>
+                <p>Add a new book or adjust your search/filter.</p>
+              </div>
+            ) : (
+              <div className="book-list">
+                {filteredBooks.map((book) => (
+                  <article key={book.id} className="book-row">
+                    <div className="book-info">
+                      <h4 className="book-title">{book.title}</h4>
+                      <span className="book-id">ID: {String(book.id).slice(0, 8)}</span>
+                    </div>
+
+                    <div className="row-right">
+                      <div
+                        className={`status-badge ${
                           book.is_rented ? "rented" : "available"
                         }`}
-                      />
-                      {book.is_rented ? `Rented by ${book.borrower}` : "Available"}
-                    </div>
-
-                    <div className="btn-group">
-                      {!book.is_rented ? (
-                        <button
-                          onClick={() => rentBook(book.id)}
-                          className="btn btn-rent"
-                          disabled={busyId === book.id}
-                        >
-                          {busyId === book.id ? "Updating..." : "Rent"}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => returnBook(book.id)}
-                          className="btn btn-return"
-                          disabled={busyId === book.id}
-                        >
-                          {busyId === book.id ? "Updating..." : "Return"}
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => deleteBook(book.id)}
-                        className="btn btn-delete"
-                        disabled={busyId === book.id}
-                        title="Delete record"
                       >
-                        Delete
-                      </button>
+                        <span
+                          className={`status-dot ${
+                            book.is_rented ? "rented" : "available"
+                          }`}
+                        />
+                        {book.is_rented ? `Rented by ${book.borrower}` : "Available"}
+                      </div>
+
+                      <div className="btn-group">
+                        {!book.is_rented ? (
+                          <button
+                            onClick={() => rentBook(book.id)}
+                            className="btn btn-rent"
+                            disabled={busyId === book.id}
+                          >
+                            {busyId === book.id ? "Updating..." : "Rent"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => returnBook(book.id)}
+                            className="btn btn-return"
+                            disabled={busyId === book.id}
+                          >
+                            {busyId === book.id ? "Updating..." : "Return"}
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => deleteBook(book.id)}
+                          className="btn btn-delete"
+                          disabled={busyId === book.id}
+                          title="Delete record"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   )
@@ -381,14 +434,19 @@ const professionalCSS = `
     min-height: 100%;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     background:
-      radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 30%),
-      radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.08), transparent 35%),
-      #020617;
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.10), transparent 32%),
+      linear-gradient(180deg, #020617 0%, #050b1a 50%, #020617 100%);
     color: #e2e8f0;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow-x: hidden;
   }
 
   button, input {
@@ -407,13 +465,16 @@ const professionalCSS = `
     top: 0;
     height: 100vh;
     padding: 28px 22px;
-    background: rgba(15, 23, 42, 0.82);
-    backdrop-filter: blur(22px);
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.84), rgba(2, 6, 23, 0.76)),
+      rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(24px) saturate(150%);
     border-right: 1px solid rgba(148, 163, 184, 0.12);
     display: flex;
     flex-direction: column;
     gap: 18px;
     overflow-y: auto;
+    box-shadow: 20px 0 60px rgba(2, 6, 23, 0.2);
   }
 
   .brand-box {
@@ -433,8 +494,9 @@ const professionalCSS = `
     font-weight: 800;
     letter-spacing: 0.5px;
     color: white;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    box-shadow: 0 16px 30px rgba(59, 130, 246, 0.25);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(124, 58, 237, 0.95));
+    box-shadow: 0 18px 34px rgba(59, 130, 246, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .brand-title {
@@ -452,11 +514,12 @@ const professionalCSS = `
   }
 
   .panel-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(148, 163, 184, 0.12);
     border-radius: 22px;
     padding: 18px;
     box-shadow: 0 20px 50px rgba(2, 6, 23, 0.25);
+    backdrop-filter: blur(18px) saturate(140%);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -466,6 +529,10 @@ const professionalCSS = `
     display: flex;
     flex-direction: column;
     gap: 3px;
+  }
+
+  .panel-head.compact {
+    gap: 0;
   }
 
   .panel-label {
@@ -497,10 +564,15 @@ const professionalCSS = `
   }
 
   .glass-input:focus {
-    border-color: rgba(59, 130, 246, 0.9);
+    border-color: rgba(59, 130, 246, 0.95);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.16);
     background: rgba(15, 23, 42, 0.95);
     transform: translateY(-1px);
+  }
+
+  .compact-input {
+    padding: 11px 12px;
+    border-radius: 12px;
   }
 
   .action-btn-primary,
@@ -509,7 +581,7 @@ const professionalCSS = `
   .stat-button {
     border: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease, filter 0.2s ease;
   }
 
   .action-btn-primary {
@@ -524,6 +596,7 @@ const professionalCSS = `
 
   .action-btn-primary:hover {
     transform: translateY(-2px);
+    filter: brightness(1.04);
     box-shadow: 0 22px 40px rgba(37, 99, 235, 0.35);
   }
 
@@ -538,14 +611,35 @@ const professionalCSS = `
     flex: 1;
     padding: 28px;
     min-width: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .phone-frame {
+    width: 100%;
+    max-width: 1180px;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .hero {
     display: flex;
-    align-items: end;
+    align-items: center;
     justify-content: space-between;
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 14px;
+    margin-bottom: 12px;
+    flex: 0 0 auto;
+  }
+
+  .hero-topline {
+    display: none;
+  }
+
+  .hero-copy {
+    min-width: 0;
   }
 
   .eyebrow {
@@ -559,26 +653,27 @@ const professionalCSS = `
 
   .hero-title {
     margin: 0;
-    font-size: clamp(1.8rem, 2.8vw, 3rem);
+    font-size: clamp(1.7rem, 2.8vw, 3rem);
     letter-spacing: -0.04em;
     color: #f8fafc;
   }
 
   .hero-text {
-    margin: 10px 0 0;
+    margin: 8px 0 0;
     max-width: 640px;
     color: #94a3b8;
-    line-height: 1.65;
+    line-height: 1.5;
   }
 
   .ghost-btn {
-    padding: 12px 16px;
+    padding: 11px 14px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(148, 163, 184, 0.14);
     color: #e2e8f0;
     font-weight: 700;
     white-space: nowrap;
+    backdrop-filter: blur(10px);
   }
 
   .ghost-btn:hover {
@@ -586,13 +681,19 @@ const professionalCSS = `
     background: rgba(255, 255, 255, 0.07);
   }
 
+  .mobile-controls {
+    display: none;
+  }
+
   .toast {
-    margin-bottom: 18px;
-    padding: 14px 16px;
-    border-radius: 16px;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
     font-weight: 700;
     border: 1px solid transparent;
     animation: floatIn 0.25s ease-out;
+    backdrop-filter: blur(14px);
+    flex: 0 0 auto;
   }
 
   .toast.success {
@@ -610,24 +711,26 @@ const professionalCSS = `
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 18px;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex: 0 0 auto;
   }
 
   .stat-card {
-    border-radius: 22px;
-    padding: 20px;
+    border-radius: 20px;
+    padding: 16px 14px;
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(148, 163, 184, 0.12);
     box-shadow: 0 20px 50px rgba(2, 6, 23, 0.18);
-    transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+    backdrop-filter: blur(18px) saturate(140%);
     text-align: left;
   }
 
   .stat-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(96, 165, 250, 0.28);
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.22);
   }
 
   .stat-card.active {
@@ -646,14 +749,14 @@ const professionalCSS = `
 
   .stat-label {
     display: block;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     color: #94a3b8;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .stat-value {
     display: block;
-    font-size: 1.9rem;
+    font-size: 1.6rem;
     font-weight: 800;
     letter-spacing: -0.04em;
     color: #f8fafc;
@@ -671,43 +774,50 @@ const professionalCSS = `
     border-radius: 24px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(148, 163, 184, 0.12);
-    padding: 20px;
+    padding: 18px;
     box-shadow: 0 20px 50px rgba(2, 6, 23, 0.18);
+    backdrop-filter: blur(18px) saturate(140%);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .list-header {
     display: flex;
     justify-content: space-between;
     align-items: end;
-    gap: 14px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex: 0 0 auto;
   }
 
   .list-header h3 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     color: #f8fafc;
   }
 
   .list-header p {
-    margin: 6px 0 0;
+    margin: 5px 0 0;
     color: #94a3b8;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   .list-search-summary {
     color: #cbd5e1;
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     padding: 8px 12px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(148, 163, 184, 0.12);
+    backdrop-filter: blur(12px);
   }
 
   .loading-state,
   .empty-state {
-    border-radius: 20px;
-    padding: 28px;
+    border-radius: 18px;
+    padding: 22px;
     text-align: center;
     color: #94a3b8;
     background: rgba(255, 255, 255, 0.02);
@@ -717,7 +827,7 @@ const professionalCSS = `
   .empty-state h4 {
     margin: 0 0 8px;
     color: #f8fafc;
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
   .empty-state p {
@@ -727,19 +837,27 @@ const professionalCSS = `
   .book-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1;
+    padding-right: 4px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .book-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
-    padding: 18px 18px;
-    border-radius: 20px;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 18px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(148, 163, 184, 0.1);
     transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+    backdrop-filter: blur(12px);
   }
 
   .book-row:hover {
@@ -774,7 +892,7 @@ const professionalCSS = `
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 14px;
+    gap: 12px;
     flex-wrap: wrap;
   }
 
@@ -787,6 +905,7 @@ const professionalCSS = `
     font-size: 0.82rem;
     font-weight: 700;
     white-space: nowrap;
+    backdrop-filter: blur(12px);
   }
 
   .status-badge.available {
@@ -858,13 +977,17 @@ const professionalCSS = `
     height: 8px;
   }
 
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.32);
+  }
+
   ::-webkit-scrollbar-thumb {
     background: rgba(148, 163, 184, 0.25);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.4);
+    background: rgba(148, 163, 184, 0.42);
   }
 
   @keyframes floatIn {
@@ -894,7 +1017,8 @@ const professionalCSS = `
     }
 
     .main-area {
-      padding: 22px;
+      padding: 18px;
+      height: 100vh;
     }
 
     .stats-grid {
@@ -904,54 +1028,278 @@ const professionalCSS = `
 
   @media (max-width: 640px) {
     .main-area {
-      padding: 16px;
+      padding: 6px;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    .brand-box {
-      padding: 8px 4px 12px;
+    .phone-frame {
+      height: calc(100vh - 12px);
+      width: min(100%, 390px);
+      margin: 0 auto;
+      border-radius: 28px;
+      overflow: hidden;
+      padding: 8px;
+      background:
+        linear-gradient(135deg, rgba(125, 211, 252, 0.14), rgba(59, 130, 246, 0.05)),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.92));
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: none;
     }
 
     .hero {
+      flex: 0 0 auto;
+      display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 4px;
+      margin: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .hero-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0;
+    }
+
+    .hero-mini-badge {
+      font-size: 0.74rem;
+      color: #f8fafc;
+      font-weight: 700;
+    }
+
+    .hero-mini-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .hero-mini-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(248, 250, 252, 0.7);
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      line-height: 1;
+    }
+
+    .hero-title {
+      margin-top: 2px;
+      font-size: 1.08rem;
+      line-height: 1.05;
+    }
+
+    .hero-text {
+      display: none;
+    }
+
+    .ghost-btn {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    .mobile-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .mobile-control-card {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 12px 24px rgba(2, 6, 23, 0.16);
+      backdrop-filter: blur(18px) saturate(140%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .mobile-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .half-card {
+      min-width: 0;
+    }
+
+    .mobile-search-card {
+      width: 100%;
+    }
+
+    .mobile-control-card .glass-input {
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+    }
+
+    .mobile-control-card .action-btn-primary {
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .compact-btn {
+      margin-top: 0;
     }
 
     .stats-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0;
+      min-height: 0;
+      flex: 0 0 auto;
+    }
+
+    .stat-card {
+      padding: 9px 8px;
+      border-radius: 14px;
+      min-height: 72px;
+    }
+
+    .stat-label {
+      font-size: 0.58rem;
+      margin-bottom: 3px;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      font-size: 0.92rem;
+    }
+
+    .list-card {
+      padding: 10px;
+      border-radius: 18px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .list-header {
       flex-direction: column;
       align-items: flex-start;
+      gap: 5px;
+      margin-bottom: 6px;
+      flex: 0 0 auto;
+    }
+
+    .list-header h3 {
+      font-size: 0.9rem;
+    }
+
+    .list-header p {
+      font-size: 0.72rem;
+      margin-top: 2px;
+    }
+
+    .list-search-summary {
+      width: 100%;
+      text-align: center;
+      font-size: 0.7rem;
+      padding: 6px 8px;
+    }
+
+    .loading-state,
+    .empty-state {
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 0.82rem;
+    }
+
+    .empty-state h4 {
+      font-size: 0.9rem;
+    }
+
+    .book-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 3px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      gap: 8px;
     }
 
     .book-row {
       flex-direction: column;
       align-items: stretch;
+      padding: 10px;
+      gap: 7px;
+      border-radius: 14px;
+    }
+
+    .book-title {
+      font-size: 0.88rem;
+    }
+
+    .book-id {
+      font-size: 0.65rem;
+      margin-top: 4px;
     }
 
     .row-right {
       justify-content: flex-start;
       width: 100%;
-    }
-
-    .btn-group {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      flex: 1 1 120px;
+      gap: 6px;
     }
 
     .status-badge {
       width: 100%;
       justify-content: center;
+      white-space: normal;
+      text-align: center;
+      font-size: 0.7rem;
+      padding: 7px 9px;
     }
 
-    .ghost-btn,
-    .action-btn-primary {
+    .btn-group {
       width: 100%;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .btn {
+      flex: 1 1 90px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .toast {
+      font-size: 0.78rem;
+      padding: 10px 12px;
+      margin-bottom: 6px;
     }
   }
 `
