@@ -9,6 +9,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [message, setMessage] = useState({ type: "", text: "" })
+  const [filter, setFilter] = useState("all") // all | rented | available
 
   useEffect(() => {
     fetchBooks()
@@ -154,13 +155,26 @@ export default function App() {
 
   const filteredBooks = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return books
+
     return books.filter((book) => {
       const titleMatch = book.title?.toLowerCase().includes(q)
       const borrowerMatch = book.borrower?.toLowerCase().includes(q)
-      return titleMatch || borrowerMatch
+      const searchMatch = !q || titleMatch || borrowerMatch
+
+      const filterMatch =
+        filter === "all"
+          ? true
+          : filter === "rented"
+          ? book.is_rented
+          : !book.is_rented
+
+      return searchMatch && filterMatch
     })
-  }, [books, search])
+  }, [books, search, filter])
+
+  const setFilterFromCard = (nextFilter) => {
+    setFilter(nextFilter)
+  }
 
   return (
     <div className="app-shell">
@@ -242,27 +256,35 @@ export default function App() {
           </button>
         </section>
 
-        {message.text && (
-          <div className={`toast ${message.type}`}>
-            {message.text}
-          </div>
-        )}
+        {message.text && <div className={`toast ${message.type}`}>{message.text}</div>}
 
         <section className="stats-grid">
-          <div className="stat-card">
+          <button
+            className={`stat-card stat-button ${filter === "all" ? "active" : ""}`}
+            onClick={() => setFilterFromCard("all")}
+            type="button"
+          >
             <span className="stat-label">Total Books</span>
             <span className="stat-value">{stats.total}</span>
-          </div>
+          </button>
 
-          <div className="stat-card">
+          <button
+            className={`stat-card stat-button ${filter === "rented" ? "active" : ""}`}
+            onClick={() => setFilterFromCard("rented")}
+            type="button"
+          >
             <span className="stat-label">Rented</span>
             <span className="stat-value danger-text">{stats.rented}</span>
-          </div>
+          </button>
 
-          <div className="stat-card">
+          <button
+            className={`stat-card stat-button ${filter === "available" ? "active" : ""}`}
+            onClick={() => setFilterFromCard("available")}
+            type="button"
+          >
             <span className="stat-label">Available</span>
             <span className="stat-value success-text">{stats.available}</span>
-          </div>
+          </button>
         </section>
 
         <section className="list-card">
@@ -272,7 +294,12 @@ export default function App() {
               <p>{filteredBooks.length} record(s) shown</p>
             </div>
             <div className="list-search-summary">
-              {search ? `Search: "${search}"` : "All books"}
+              {filter === "all"
+                ? "Showing all books"
+                : filter === "rented"
+                ? "Showing rented books"
+                : "Showing available books"}
+              {search ? ` • Search: "${search}"` : ""}
             </div>
           </div>
 
@@ -281,7 +308,7 @@ export default function App() {
           ) : filteredBooks.length === 0 ? (
             <div className="empty-state">
               <h4>No records found</h4>
-              <p>Add a new book or adjust your search filter.</p>
+              <p>Add a new book or adjust your search/filter.</p>
             </div>
           ) : (
             <div className="book-list">
@@ -298,10 +325,12 @@ export default function App() {
                         book.is_rented ? "rented" : "available"
                       }`}
                     >
-                      <span className={`status-dot ${book.is_rented ? "rented" : "available"}`} />
-                      {book.is_rented
-                        ? `Rented by ${book.borrower}`
-                        : "Available"}
+                      <span
+                        className={`status-dot ${
+                          book.is_rented ? "rented" : "available"
+                        }`}
+                      />
+                      {book.is_rented ? `Rented by ${book.borrower}` : "Available"}
                     </div>
 
                     <div className="btn-group">
@@ -476,7 +505,8 @@ const professionalCSS = `
 
   .action-btn-primary,
   .ghost-btn,
-  .btn {
+  .btn,
+  .stat-button {
     border: none;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
@@ -591,12 +621,27 @@ const professionalCSS = `
     border: 1px solid rgba(148, 163, 184, 0.12);
     box-shadow: 0 20px 50px rgba(2, 6, 23, 0.18);
     transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+    text-align: left;
   }
 
   .stat-card:hover {
     transform: translateY(-4px);
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(96, 165, 250, 0.28);
+  }
+
+  .stat-card.active {
+    border-color: rgba(59, 130, 246, 0.9);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14), 0 20px 50px rgba(2, 6, 23, 0.18);
+    transform: translateY(-2px);
+  }
+
+  .stat-button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    color: inherit;
   }
 
   .stat-label {
